@@ -1,0 +1,599 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Middlesex University — Cybersecurity Trivia</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: linear-gradient(180deg, #2a2a3e 0%, #1c1c2b 100%);
+      --card-bg: rgba(255, 255, 255, 0.05);
+      --card-border: rgba(255, 255, 255, 0.1);
+      --accent: #a78bfa;
+      --accent-2: #2dd4bf;
+      --text-primary: #f3f4f6;
+      --text-muted: #9ca3af;
+      --shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+      --radius: 16px;
+      --success-bg: rgba(45, 212, 191, 0.1);
+      --success-text: #2dd4bf;
+      --error-bg: rgba(244, 63, 94, 0.1);
+      --error-text: #f43f5e;
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text-primary);
+      padding: 20px;
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      justify-content: space-between;
+      animation: fadeIn 1.5s ease-in-out;
+      flex-wrap: wrap;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 2.25rem;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-fill-color: transparent;
+      animation: gradientShift 4s infinite alternate ease-in-out;
+    }
+
+    header p {
+      margin: 0;
+      color: var(--text-muted);
+      font-size: 1.1rem;
+    }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      animation: fadeIn 2s ease-in-out;
+      flex-wrap: wrap;
+    }
+
+    button {
+      background: var(--accent);
+      border: none;
+      color: white;
+      padding: 10px 18px;
+      border-radius: 999px;
+      cursor: pointer;
+      font-weight: 700;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      transition: all .3s ease;
+    }
+
+    button:hover {
+      transform: translateY(-3px) scale(1.05);
+      box-shadow: 0 0 15px var(--accent), 0 6px 20px rgba(0, 0, 0, 0.3);
+      filter: brightness(1.1);
+    }
+
+    button.secondary {
+      background: var(--accent-2);
+    }
+
+    button.secondary:hover {
+      box-shadow: 0 0 15px var(--accent-2), 0 6px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    main {
+      display: grid;
+      grid-template-columns: 1fr 280px;
+      gap: 18px;
+      margin-top: 18px;
+    }
+
+    .panel {
+      background: var(--card-bg);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 24px;
+      box-shadow: var(--shadow);
+      animation: fadeIn 1.5s ease-in-out;
+    }
+
+    .quiz-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 16px;
+    }
+
+    .card {
+      padding: 16px;
+      border-radius: 12px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+      border: 1px solid var(--card-border);
+      transition: all .3s ease;
+      opacity: 0;
+      animation: floatIn 0.8s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+    }
+
+    .card:hover {
+      transform: scale(1.03);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+      border-color: var(--accent);
+    }
+
+    .opt {
+      padding: 10px;
+      margin-top: 8px;
+      border-radius: 8px;
+      border: 1px dashed var(--card-border);
+      cursor: pointer;
+      transition: all .2s ease;
+    }
+
+    .opt:hover {
+      border-color: var(--accent);
+      background: rgba(167, 139, 250, 0.1);
+      color: var(--accent);
+      transform: translateX(5px);
+    }
+
+    .fillin {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .fillin-box {
+      border-bottom: 1px solid var(--card-border);
+      padding-bottom: 16px;
+      opacity: 0;
+      animation: floatIn 0.8s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+    }
+
+    input[type=text] {
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid var(--card-border);
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--text-primary);
+      margin-right: 8px;
+      margin-top: 8px;
+    }
+    input[type=text]::placeholder {
+      color: var(--text-muted);
+    }
+
+    .match-board {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .match-item {
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid var(--card-border);
+      background: rgba(255, 255, 255, 0.05);
+      cursor: pointer;
+      transition: all .2s ease;
+      opacity: 0;
+      animation: floatIn 0.8s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+    }
+
+    .match-item:hover {
+      background: var(--success-bg);
+      transform: scale(1.05);
+      border-color: var(--accent-2);
+    }
+
+    .scoreboard {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      justify-content: space-between;
+      flex-direction: column;
+      text-align: center;
+    }
+
+    .score {
+      font-size: 48px;
+      font-weight: 800;
+      margin-top: 10px;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-fill-color: transparent;
+      animation: pulse 2.5s infinite ease-in-out;
+    }
+
+    .result-badge {
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-weight: 700;
+      margin-left: 8px;
+    }
+
+    .correct {
+      background: var(--success-bg);
+      color: var(--success-text);
+      border: 1px solid var(--success-text);
+    }
+
+    .incorrect {
+      background: var(--error-bg);
+      color: var(--error-text);
+      border: 1px solid var(--error-text);
+    }
+
+    footer {
+      grid-column: 1/-1;
+      margin-top: 16px;
+      color: var(--text-muted);
+      text-align: center;
+    }
+    
+    .shield-container {
+      display: grid;
+      place-items: center;
+      margin-bottom: 16px;
+      animation: shieldPulse 3s infinite ease-in-out;
+    }
+
+    .shield-svg {
+      width: 100px;
+      height: auto;
+    }
+
+    .shield-outline {
+      stroke: var(--accent);
+      transition: all 0.5s ease;
+    }
+    
+    .shield-fill {
+      transition: all 0.5s ease;
+    }
+    
+    #shieldFillRect {
+      transition: y 0.3s ease-out;
+    }
+
+    .shield-icon {
+      transition: all 0.5s ease;
+      transform-origin: center center;
+    }
+
+    .shield-lock {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .shield-check {
+      opacity: 0;
+      transform: scale(0.5);
+    }
+
+    .shield-container.complete {
+      animation: shieldPulseComplete 1.5s infinite ease-in-out;
+    }
+
+    .shield-container.complete .shield-lock {
+      opacity: 0;
+      transform: scale(0.5);
+    }
+
+    .shield-container.complete .shield-check {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes floatIn {
+      0% {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes gradientShift {
+      0% {
+        filter: hue-rotate(0deg);
+      }
+      100% {
+        filter: hue-rotate(45deg);
+      }
+    }
+
+    @keyframes pulse {
+      0%,
+      100% {
+        transform: scale(1);
+        opacity: 0.8;
+      }
+      50% {
+        transform: scale(1.1);
+        opacity: 1;
+      }
+    }
+    
+    @keyframes shieldPulse {
+      0%, 100% {
+        filter: drop-shadow(0 0 3px var(--accent));
+        transform: scale(1);
+      }
+      50% {
+        filter: drop-shadow(0 0 10px var(--accent));
+        transform: scale(1.05);
+      }
+    }
+
+    @keyframes shieldPulseComplete {
+      0%, 100% {
+        filter: drop-shadow(0 0 5px var(--accent-2));
+        transform: scale(1);
+      }
+      50% {
+        filter: drop-shadow(0 0 20px var(--accent-2));
+        transform: scale(1.1);
+      }
+    }
+
+    @media (max-width: 1000px) {
+      main {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>Middlesex University Cybersecurity Awareness Week: Cybersecurity Trivia</h1>
+      <p>🛡️ Are You Safe Online? Test your cybersecurity knowledge with quizzes, matching challenges, and fill-in-the-blanks!</p>
+    </div>
+    <div class="controls">
+      <button id="btnMC">💻 Multiple Choice</button>
+      <button class="secondary" id="btnFill">🧠 Cyber Knowledge Fill-in</button>
+      <button id="btnMatch">🚩 Flag Your Knowledge</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="panel" id="leftPanel">
+      <div id="content"></div>
+    </section>
+
+    <aside class="panel">
+      <div class="scoreboard">
+        
+        <div class="shield-container" id="shieldContainer">
+          <svg class="shield-svg" viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <clipPath id="shieldFillClip">
+                <rect id="shieldFillRect" x="0" y="120" width="100" height="120" />
+              </clipPath>
+            </defs>
+            
+            <path class="shield-outline"
+              d="M50 5 L95 30 V70 C95 100 65 115 50 120 C35 115 5 100 5 70 V30 Z"
+              stroke-width="3" fill="var(--card-bg)" />
+              
+            <path class="shield-fill"
+              d="M50 5 L95 30 V70 C95 100 65 115 50 120 C35 115 5 100 5 70 V30 Z"
+              fill="var(--accent-2)" clip-path="url(#shieldFillClip)" />
+              
+            <path class="shield-icon shield-lock"
+              d="M38 60 V45 C38 36.7 43.3 30 50 30 C56.7 30 62 36.7 62 45 V60 M30 60 H70 V90 H30 Z"
+              stroke="var(--text-muted)" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+              
+            <path class="shield-icon shield-check"
+              d="M35 65 L48 78 L65 55"
+              stroke="var(--text-primary)" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </div>
+        
+        <div>Score Limit: 200</div>
+        <div class="score" id="score">0</div>
+      </div>
+    </aside>
+
+    <footer>+10 points per correct answer. Reach 200 to celebrate! 🎉</footer>
+  </main>
+
+  <script>
+    const content = document.getElementById('content');
+    const scoreEl = document.getElementById('score');
+    
+    // --- UPDATED SCORE LOGIC ---
+    let score = 0;
+    const maxScore = 200; // Changed to 200
+    const shieldFillRect = document.getElementById('shieldFillRect');
+    const shieldContainer = document.getElementById('shieldContainer');
+    const shieldHeight = 120; 
+
+    function addScore(n) {
+      score += n;
+      if (score > maxScore) score = maxScore;
+      scoreEl.textContent = score;
+
+      const fillPercent = score / maxScore;
+      const newY = shieldHeight - (fillPercent * shieldHeight);
+      shieldFillRect.setAttribute('y', newY);
+
+      if (score >= maxScore) {
+        alert('🎉 Congratulations! You reached full score!');
+        shieldContainer.classList.add('complete');
+      }
+    }
+    // --- END UPDATED SCORE LOGIC ---
+
+
+    document.getElementById('btnMC').onclick = renderMC;
+    document.getElementById('btnFill').onclick = renderFill;
+    document.getElementById('btnMatch').onclick = renderMatch;
+
+    // --- DATA (Unchanged) ---
+    const multipleChoice = [
+      { q: 'Web exploitation is the process of:', options: ['Making websites faster', 'Exploiting vulnerabilities in web apps', 'Designing webpages', 'Creating secure APIs'], answer: 1 },
+      { q: 'Reverse engineering is:', options: ['Building from scratch', 'Understanding software internals', 'Encrypting data', 'Writing reports'], answer: 1 },
+      { q: 'Most common cyber threat?', options: ['Human error', 'Hardware issues', 'Viruses', 'Hacktivism'], answer: 0 },
+      { q: 'Company size matters to attackers?', options: ['Yes', 'No, all sizes targeted equally'], answer: 1 },
+      { q: 'Vulnerable industries?', options: ['Finance, Healthcare, Education', 'Construction, Mining, Real Estate'], answer: 0 },
+      { q: 'Strong password example?', options: ['m#P52s@ap$V', 'password123', '123456', 'abcdef'], answer: 0 },
+      { q: 'Unknown email received?', options: ['Open it', 'Delete and ignore', 'Don’t open; if opened don’t click', 'Forward it'], answer: 2 },
+      { q: 'VPN stands for?', options: ['Virtual Private Network', 'Very Private Network', 'Verified Public Network', 'Virtual Public Node'], answer: 0 },
+      { q: 'Backup frequency?', options: ['Once a week', 'Only when problem', 'Every day', 'Whenever creating important files'], answer: 3 },
+      { q: 'Bank email request for passwords?', options: ['Once a month', 'Never', 'Once a year', 'Every six months'], answer: 1 },
+      { q: 'Secure website URL begins with?', options: ['HTTP', 'HTTPS', 'FTP', 'WWW'], answer: 1 },
+      { q: 'Multi-factor authentication adds?', options: ['More clicks', 'Security layer', 'Slower login', 'Nothing'], answer: 1 },
+      { q: 'Spear phishing targets?', options: ['Random users', 'Specific individuals', 'Government only', 'Hackers'], answer: 1 }
+    ];
+    const fillBlanks = [
+      { q: 'The _____ cipher shifts letters by a fixed number.', a: 'Caesar' },
+      { q: '_____ Injection can leak database data.', a: 'SQL' },
+      { q: 'Analyzing code to find vulnerabilities is called _____ Engineering.', a: 'Reverse' },
+      { q: 'A _____ Overflow exceeds memory limits.', a: 'Buffer' },
+      { q: 'Cross-Site _____ injects scripts into web pages.', a: 'Scripting' },
+      { q: '_____ phishing attempts mimic legitimate emails.', a: 'Spear' },
+      { q: 'Using a _____ can hide your IP and encrypt traffic.', a: 'VPN' },
+      { q: 'Keeping your software _____ prevents exploits.', a: 'Updated' },
+      { q: 'Multi-Factor _____ adds a security layer.', a: 'Authentication' },
+      { q: 'A secure website URL begins with _____.', a: 'HTTPS' }
+    ];
+    const matchingPairs = [
+      { term: 'Caesar Cipher', def: 'Simple letter shift cipher' },
+      { term: 'SQL Injection', def: 'Manipulates database queries' },
+      { term: 'Reverse Engineering', def: 'Dissects software to understand internals' },
+      { term: 'Buffer Overflow', def: 'Overwrites memory limits' },
+      { term: 'XSS', def: 'Injects malicious scripts into websites' },
+      { term: 'Steganography', def: 'Hiding data inside images or files' },
+      { term: 'Brute Force Attack', def: 'Trying many passwords to gain access' },
+      { term: 'Packet Sniffing', def: 'Capturing network data packets' },
+      { term: 'CTF Flag', def: 'Secret string earned after solving a challenge' },
+      { term: 'Privilege Escalation', def: 'Gaining higher system permissions' }
+    ];
+    // --- END DATA ---
+
+    function renderMC() {
+      content.innerHTML = '<h2>💻 Multiple Choice Quiz</h2>';
+      const grid = document.createElement('div'); grid.className = 'quiz-grid';
+      multipleChoice.forEach((m, i) => {
+        const c = document.createElement('div'); c.className = 'card';
+        c.style.animationDelay = `${i * 0.05}s`;
+        c.innerHTML = `<h3>Q${i + 1}</h3><div>${m.q}</div>`;
+        m.options.forEach((opt, idx) => {
+          const o = document.createElement('div'); o.className = 'opt'; o.textContent = String.fromCharCode(65 + idx) + '. ' + opt;
+          o.onclick = () => {
+            if (idx === m.answer) { o.classList.add('correct'); addScore(10); o.textContent += ' ✅'; } else { o.classList.add('incorrect'); o.textContent += ' ❌'; }
+            Array.from(c.querySelectorAll('.opt')).forEach(x => x.style.pointerEvents = 'none');
+          };
+          c.appendChild(o);
+        });
+        grid.appendChild(c);
+      });
+      content.appendChild(grid);
+    }
+
+    function renderFill() {
+      content.innerHTML = '<h2>🧠 Cyber Knowledge Fill-in Quiz</h2>';
+      const wrap = document.createElement('div'); wrap.className = 'fillin';
+      fillBlanks.forEach((f, i) => {
+        const box = document.createElement('div');
+        box.className = 'fillin-box';
+        box.style.animationDelay = `${i * 0.05}s`;
+        box.innerHTML = `<b>${i + 1}. ${f.q}</b><br>`;
+        const inp = document.createElement('input'); inp.placeholder = 'Type your answer...';
+        const btn = document.createElement('button'); btn.textContent = 'Check';
+        const res = document.createElement('span');
+        btn.onclick = () => {
+          if (inp.value.trim().toLowerCase() === f.a.toLowerCase()) { res.textContent = '✅ Correct! +10'; res.className = 'result-badge correct'; addScore(10); } else { res.textContent = '❌ Correct: ' + f.a; res.className = 'result-badge incorrect'; }
+          inp.disabled = true;
+          btn.disabled = true;
+        };
+        box.appendChild(inp); box.appendChild(btn); box.appendChild(res);
+        wrap.appendChild(box);
+      });
+      content.appendChild(wrap);
+    }
+
+    function renderMatch() {
+      content.innerHTML = '<h2>🚩 Flag Your Knowledge: The CTF Trivia Challenge</h2><p>Match the cybersecurity term with its definition!</p>';
+      const board = document.createElement('div'); board.className = 'match-board';
+      const termsCol = document.createElement('div'); const defsCol = document.createElement('div');
+      const terms = shuffle(matchingPairs.map(p => p.term));
+      const defs = shuffle(matchingPairs.map(p => p.def));
+      let selectedTerm = null;
+      let selectedTermEl = null;
+
+      terms.forEach((t, i) => {
+        const el = document.createElement('div'); el.className = 'match-item'; el.textContent = t;
+        el.style.animationDelay = `${i * 0.05}s`;
+        el.onclick = () => {
+          Array.from(termsCol.children).forEach(c => { c.style.borderColor = 'var(--card-border)'; c.style.background = 'rgba(255, 255, 255, 0.05)'; });
+          el.style.borderColor = 'var(--accent)';
+          el.style.background = 'rgba(167, 139, 250, 0.1)';
+          selectedTerm = t;
+          selectedTermEl = el;
+        };
+        termsCol.appendChild(el);
+      });
+      defs.forEach((d, i) => {
+        const el = document.createElement('div'); el.className = 'match-item'; el.textContent = d;
+        el.style.animationDelay = `${(terms.length + i) * 0.05}s`;
+        el.onclick = () => {
+          if (!selectedTerm) { alert('Select a term from the left column first.'); return; }
+          const correct = matchingPairs.find(p => p.term === selectedTerm).def;
+          if (d === correct) {
+            addScore(10);
+            el.style.opacity = 0.4;
+            el.style.pointerEvents = 'none';
+            selectedTermEl.style.opacity = 0.4;
+            selectedTermEl.style.pointerEvents = 'none';
+          } else {
+            alert('❌ Not a match. Try again.');
+          }
+          selectedTerm = null;
+          selectedTermEl.style.borderColor = 'var(--card-border)';
+          selectedTermEl.style.background = 'rgba(255, 255,255, 0.05)';
+        };
+        defsCol.appendChild(el);
+      });
+      board.appendChild(termsCol); board.appendChild(defsCol); content.appendChild(board);
+    }
+
+    function shuffle(arr) { return arr.sort(() => Math.random() - 0.5); }
+
+    // Render default view
+    renderMC();
+  </script>
+</body>
+</html>
