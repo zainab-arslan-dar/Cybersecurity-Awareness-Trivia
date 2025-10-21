@@ -99,7 +99,8 @@
 
     main {
       display: grid;
-      grid-template-columns: 1fr 280px;
+      /* Default desktop layout: main content and sidebar */
+      grid-template-columns: 1fr 280px; 
       gap: 18px;
       margin-top: 18px;
     }
@@ -208,6 +209,7 @@
       justify-content: space-between;
       flex-direction: column;
       text-align: center;
+      margin-bottom: 24px; 
     }
 
     .score {
@@ -221,6 +223,50 @@
       text-fill-color: transparent;
       animation: pulse 2.5s infinite ease-in-out;
     }
+
+    /* Timer CSS */
+    .timer-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding-top: 16px;
+        border-top: 1px solid var(--card-border);
+    }
+
+    .timer-display {
+        font-size: 3rem; 
+        font-weight: 800;
+        color: var(--accent);
+        text-shadow: 0 0 10px rgba(167, 139, 250, 0.5);
+        margin-top: 10px;
+        position: relative;
+        padding-left: 50px; 
+    }
+
+    .timer-caption {
+        font-size: 1.1rem;
+        color: var(--text-muted);
+        margin-bottom: 5px;
+    }
+    
+    .timer-display.low-time {
+        color: var(--error-text);
+        animation: lowTimePulse 0.7s infinite alternate;
+    }
+    
+    /* Clock Sticker Styling */
+    .clock-sticker {
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%) scale(1.2);
+        color: var(--accent-2);
+        animation: tickTock 1s infinite steps(2);
+        text-shadow: 0 0 8px rgba(45, 212, 191, 0.5);
+        font-size: 30px;
+    }
+    /* End Timer CSS */
+
 
     .result-badge {
       padding: 6px 10px;
@@ -367,9 +413,50 @@
       }
     }
 
+    @keyframes lowTimePulse {
+        from { transform: scale(1); opacity: 1; }
+        to { transform: scale(1.05); opacity: 0.9; }
+    }
+    
+    @keyframes tickTock {
+        0% { transform: translateY(-50%) rotate(0deg) scale(1.2); }
+        100% { transform: translateY(-50%) rotate(10deg) scale(1.2); }
+    }
+
+    /* --- MOBILE RESPONSIVENESS MEDIA QUERY --- */
     @media (max-width: 1000px) {
+      /* Stack the main content and sidebar */
       main {
         grid-template-columns: 1fr;
+      }
+
+      header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .controls {
+        width: 100%;
+        justify-content: center;
+        margin-top: 15px;
+      }
+
+      header h1 {
+        font-size: 1.75rem; /* Slightly smaller heading on mobile */
+      }
+      
+      body {
+        padding: 10px; /* Reduced padding on small screens */
+      }
+      
+      .panel {
+        padding: 15px; /* Reduced panel padding */
+      }
+
+      .match-board {
+        /* Stack matching columns on very small screens if necessary, 
+           but 1fr 1fr is usually fine unless content is long. */
+        grid-template-columns: 1fr 1fr; 
       }
     }
   </style>
@@ -421,21 +508,139 @@
           </svg>
         </div>
         
-        <div>Score Limit: 200</div>
+        <div>Score Limit: 450</div>
         <div class="score" id="score">0</div>
       </div>
-    </aside>
+      
+      <div class="timer-container">
+          <div class="timer-caption">⏱️ Time Remaining for Challenge</div>
+          <div class="timer-display" id="timerDisplay">
+             <span class="clock-sticker">⏳</span>
+             --
+          </div>
+      </div>
+      </aside>
 
-    <footer>+10 points per correct answer. Reach 200 to celebrate! 🎉</footer>
+    <footer>+10 points per correct answer. Reach 450 to celebrate! 🎉</footer>
   </main>
 
   <script>
     const content = document.getElementById('content');
     const scoreEl = document.getElementById('score');
+    const timerDisplay = document.getElementById('timerDisplay');
     
-    // --- UPDATED SCORE LOGIC ---
+    // --- Timer Variables and Logic ---
+    let timeRemaining = 0;
+    let timerInterval = null;
+    let quizTypeStarted = { mc: false, fill: false, match: false };
+    let quizPoints = { mc: 0, fill: 0, match: 0 }; 
+    
+    const TIMER_DURATIONS = {
+        'mc': 30,    
+        'fill': 25,  
+        'match': 20  
+    };
+    
+    const BONUS_POINTS = {
+        'mc': 30,
+        'fill': 40,
+        'match': 30
+    };
+
+    function updateTimerDisplay(time) {
+        timerDisplay.innerHTML = `<span class="clock-sticker">⏳</span> ${time < 10 ? '0' + time : time}`;
+        if (time <= 10 && time > 0) {
+            timerDisplay.classList.add('low-time');
+        } else {
+            timerDisplay.classList.remove('low-time');
+        }
+    }
+
+    function checkQuizCompletion(quizKey) {
+        let totalQuestions;
+
+        switch (quizKey) {
+            case 'mc':
+                totalQuestions = multipleChoice.length;
+                break;
+            case 'fill':
+                totalQuestions = fillBlanks.length;
+                break;
+            case 'match':
+                totalQuestions = matchingPairs.length;
+                break;
+            default:
+                return false;
+        }
+
+        const requiredPoints = totalQuestions * 10;
+        
+        if (quizPoints[quizKey] === requiredPoints) {
+            const bonus = BONUS_POINTS[quizKey];
+            addScore(bonus);
+            alert(`⚡ Time Bonus! You correctly completed all questions in ${quizKey} with time remaining for +${bonus} points!`);
+            return true;
+        }
+        return false;
+    }
+
+    function stopTimer(quizKey, completed = true) {
+        if (timerInterval) clearInterval(timerInterval);
+        timerInterval = null;
+        
+        if (completed && timeRemaining > 0) {
+            checkQuizCompletion(quizKey);
+        }
+
+        quizTypeStarted[quizKey] = true; 
+        updateTimerDisplay(completed ? 0 : '--'); 
+        timerDisplay.classList.remove('low-time');
+    }
+
+    function startTimer(duration, quizKey) {
+        if (timerInterval) clearInterval(timerInterval);
+
+        timeRemaining = duration;
+        updateTimerDisplay(timeRemaining);
+
+        timerInterval = setInterval(() => {
+            timeRemaining--;
+            updateTimerDisplay(timeRemaining);
+
+            if (timeRemaining <= 0) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+                alert(`⏰ Time's up for the ${quizKey} challenge! All unsolved questions are now disabled.`);
+                // In a real application, you'd add logic here to disable further interaction.
+            }
+        }, 1000);
+    }
+    
+    function handleFirstInteraction(quizKey) {
+        if (!quizTypeStarted[quizKey] && timerInterval === null) {
+            startTimer(TIMER_DURATIONS[quizKey], quizKey);
+        }
+    }
+    
+    function resetTimerState(currentQuizKey) {
+        if (timerInterval) clearInterval(timerInterval);
+        timerInterval = null;
+        updateTimerDisplay('--');
+        
+        quizPoints[currentQuizKey] = 0;
+        
+        Object.keys(quizTypeStarted).forEach(key => {
+            if (key !== currentQuizKey) {
+                quizTypeStarted[key] = false;
+            }
+        });
+    }
+    // --- End Timer Logic ---
+
+
+    // --- Score Logic ---
     let score = 0;
-    const maxScore = 200; // Changed to 200
+    const maxScore = 450; 
     const shieldFillRect = document.getElementById('shieldFillRect');
     const shieldContainer = document.getElementById('shieldContainer');
     const shieldHeight = 120; 
@@ -454,14 +659,14 @@
         shieldContainer.classList.add('complete');
       }
     }
-    // --- END UPDATED SCORE LOGIC ---
+    // --- End Score Logic ---
 
 
     document.getElementById('btnMC').onclick = renderMC;
     document.getElementById('btnFill').onclick = renderFill;
     document.getElementById('btnMatch').onclick = renderMatch;
 
-    // --- DATA (Unchanged) ---
+    // --- DATA ---
     const multipleChoice = [
       { q: 'Web exploitation is the process of:', options: ['Making websites faster', 'Exploiting vulnerabilities in web apps', 'Designing webpages', 'Creating secure APIs'], answer: 1 },
       { q: 'Reverse engineering is:', options: ['Building from scratch', 'Understanding software internals', 'Encrypting data', 'Writing reports'], answer: 1 },
@@ -502,8 +707,11 @@
       { term: 'Privilege Escalation', def: 'Gaining higher system permissions' }
     ];
     // --- END DATA ---
+    
+    // --- Quiz Rendering Functions ---
 
     function renderMC() {
+      resetTimerState('mc');
       content.innerHTML = '<h2>💻 Multiple Choice Quiz</h2>';
       const grid = document.createElement('div'); grid.className = 'quiz-grid';
       multipleChoice.forEach((m, i) => {
@@ -513,8 +721,21 @@
         m.options.forEach((opt, idx) => {
           const o = document.createElement('div'); o.className = 'opt'; o.textContent = String.fromCharCode(65 + idx) + '. ' + opt;
           o.onclick = () => {
-            if (idx === m.answer) { o.classList.add('correct'); addScore(10); o.textContent += ' ✅'; } else { o.classList.add('incorrect'); o.textContent += ' ❌'; }
+            handleFirstInteraction('mc'); 
+            if (idx === m.answer) { 
+                o.classList.add('correct'); 
+                addScore(10); 
+                quizPoints.mc += 10; 
+                o.textContent += ' ✅'; 
+            } else { 
+                o.classList.add('incorrect'); 
+                o.textContent += ' ❌'; 
+            }
             Array.from(c.querySelectorAll('.opt')).forEach(x => x.style.pointerEvents = 'none');
+            
+            if (Array.from(grid.querySelectorAll('.card')).every(card => card.querySelector('.correct, .incorrect'))) {
+                stopTimer('mc', true); 
+            }
           };
           c.appendChild(o);
         });
@@ -524,6 +745,7 @@
     }
 
     function renderFill() {
+      resetTimerState('fill');
       content.innerHTML = '<h2>🧠 Cyber Knowledge Fill-in Quiz</h2>';
       const wrap = document.createElement('div'); wrap.className = 'fillin';
       fillBlanks.forEach((f, i) => {
@@ -534,10 +756,26 @@
         const inp = document.createElement('input'); inp.placeholder = 'Type your answer...';
         const btn = document.createElement('button'); btn.textContent = 'Check';
         const res = document.createElement('span');
+        
+        inp.oninput = () => { handleFirstInteraction('fill'); }; 
+        
         btn.onclick = () => {
-          if (inp.value.trim().toLowerCase() === f.a.toLowerCase()) { res.textContent = '✅ Correct! +10'; res.className = 'result-badge correct'; addScore(10); } else { res.textContent = '❌ Correct: ' + f.a; res.className = 'result-badge incorrect'; }
-          inp.disabled = true;
-          btn.disabled = true;
+            handleFirstInteraction('fill'); 
+            if (inp.value.trim().toLowerCase() === f.a.toLowerCase()) { 
+                res.textContent = '✅ Correct! +10'; 
+                res.className = 'result-badge correct'; 
+                addScore(10); 
+                quizPoints.fill += 10; 
+            } else { 
+                res.textContent = '❌ Correct: ' + f.a; 
+                res.className = 'result-badge incorrect'; 
+            }
+            inp.disabled = true;
+            btn.disabled = true;
+            
+            if (Array.from(wrap.querySelectorAll('.fillin-box')).every(b => b.querySelector('button').disabled)) {
+                stopTimer('fill', true); 
+            }
         };
         box.appendChild(inp); box.appendChild(btn); box.appendChild(res);
         wrap.appendChild(box);
@@ -546,6 +784,7 @@
     }
 
     function renderMatch() {
+      resetTimerState('match');
       content.innerHTML = '<h2>🚩 Flag Your Knowledge: The CTF Trivia Challenge</h2><p>Match the cybersecurity term with its definition!</p>';
       const board = document.createElement('div'); board.className = 'match-board';
       const termsCol = document.createElement('div'); const defsCol = document.createElement('div');
@@ -553,11 +792,14 @@
       const defs = shuffle(matchingPairs.map(p => p.def));
       let selectedTerm = null;
       let selectedTermEl = null;
+      let matchesFound = 0;
+      const totalMatches = matchingPairs.length;
 
       terms.forEach((t, i) => {
         const el = document.createElement('div'); el.className = 'match-item'; el.textContent = t;
         el.style.animationDelay = `${i * 0.05}s`;
         el.onclick = () => {
+          handleFirstInteraction('match'); 
           Array.from(termsCol.children).forEach(c => { c.style.borderColor = 'var(--card-border)'; c.style.background = 'rgba(255, 255, 255, 0.05)'; });
           el.style.borderColor = 'var(--accent)';
           el.style.background = 'rgba(167, 139, 250, 0.1)';
@@ -571,19 +813,29 @@
         el.style.animationDelay = `${(terms.length + i) * 0.05}s`;
         el.onclick = () => {
           if (!selectedTerm) { alert('Select a term from the left column first.'); return; }
+          handleFirstInteraction('match'); 
           const correct = matchingPairs.find(p => p.term === selectedTerm).def;
+          
           if (d === correct) {
             addScore(10);
+            quizPoints.match += 10; 
+            matchesFound++;
             el.style.opacity = 0.4;
             el.style.pointerEvents = 'none';
             selectedTermEl.style.opacity = 0.4;
             selectedTermEl.style.pointerEvents = 'none';
+            
+            if (matchesFound === totalMatches) {
+                stopTimer('match', true); 
+            }
           } else {
             alert('❌ Not a match. Try again.');
           }
           selectedTerm = null;
-          selectedTermEl.style.borderColor = 'var(--card-border)';
-          selectedTermEl.style.background = 'rgba(255, 255,255, 0.05)';
+          if (selectedTermEl) { 
+              selectedTermEl.style.borderColor = 'var(--card-border)';
+              selectedTermEl.style.background = 'rgba(255, 255,255, 0.05)';
+          }
         };
         defsCol.appendChild(el);
       });
@@ -592,8 +844,9 @@
 
     function shuffle(arr) { return arr.sort(() => Math.random() - 0.5); }
 
-    // Render default view
+    // Render default view and set initial timer state
     renderMC();
+    updateTimerDisplay('--');
   </script>
 </body>
 </html>
