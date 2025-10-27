@@ -209,7 +209,7 @@
       justify-content: space-between;
       flex-direction: column;
       text-align: center;
-      margin-bottom: 24px; 
+      /* margin-bottom: 24px;  <-- REMOVED */
     }
 
     .score {
@@ -226,44 +226,47 @@
 
     /* Timer CSS */
     .timer-container {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        padding-top: 16px;
-        border-top: 1px solid var(--card-border);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      /* padding-top: 16px; <-- REMOVED */
+      /* border-top: 1px solid var(--card-border); <-- REMOVED */
+      padding-bottom: 24px; /* <-- ADDED */
+      border-bottom: 1px solid var(--card-border); /* <-- ADDED */
+      margin-bottom: 24px; /* <-- ADDED */
     }
 
     .timer-display {
-        font-size: 3rem; 
-        font-weight: 800;
-        color: var(--accent);
-        text-shadow: 0 0 10px rgba(167, 139, 250, 0.5);
-        margin-top: 10px;
-        position: relative;
-        padding-left: 50px; 
+      font-size: 4.5rem;  /* <-- MODIFIED */
+      font-weight: 800;
+      color: var(--accent);
+      text-shadow: 0 0 10px rgba(167, 139, 250, 0.5);
+      margin-top: 10px;
+      position: relative;
+      padding-left: 60px;  /* <-- MODIFIED */
     }
 
     .timer-caption {
-        font-size: 1.1rem;
-        color: var(--text-muted);
-        margin-bottom: 5px;
+      font-size: 1.25rem; /* <-- MODIFIED */
+      color: var(--text-muted);
+      margin-bottom: 5px;
     }
     
     .timer-display.low-time {
-        color: var(--error-text);
-        animation: lowTimePulse 0.7s infinite alternate;
+      color: var(--error-text);
+      animation: lowTimePulse 0.7s infinite alternate;
     }
     
     /* Clock Sticker Styling */
     .clock-sticker {
-        position: absolute;
-        left: 0;
-        top: 50%;
-        transform: translateY(-50%) scale(1.2);
-        color: var(--accent-2);
-        animation: tickTock 1s infinite steps(2);
-        text-shadow: 0 0 8px rgba(45, 212, 191, 0.5);
-        font-size: 30px;
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%); /* <-- MODIFIED */
+      color: var(--accent-2);
+      animation: tickTock 1s infinite steps(2);
+      text-shadow: 0 0 8px rgba(45, 212, 191, 0.5);
+      font-size: 40px; /* <-- MODIFIED */
     }
     /* End Timer CSS */
 
@@ -419,8 +422,8 @@
     }
     
     @keyframes tickTock {
-        0% { transform: translateY(-50%) rotate(0deg) scale(1.2); }
-        100% { transform: translateY(-50%) rotate(10deg) scale(1.2); }
+        0% { transform: translateY(-50%) rotate(0deg); } /* <-- MODIFIED */
+        100% { transform: translateY(-50%) rotate(10deg); } /* <-- MODIFIED */
     }
 
     /* --- MOBILE RESPONSIVENESS MEDIA QUERY --- */
@@ -429,6 +432,15 @@
       main {
         grid-template-columns: 1fr;
       }
+
+      /* --- ADDED FOR MOBILE STACKING --- */
+      #leftPanel {
+        grid-row: 2; /* Quiz content appears second */
+      }
+      aside.panel {
+        grid-row: 1; /* Status panel (timer/score) appears first */
+      }
+      /* --- END ADDED --- */
 
       header {
         flex-direction: column;
@@ -480,6 +492,13 @@
     </section>
 
     <aside class="panel">
+      <div class="timer-container">
+        <div class="timer-caption">⏱️ Time Remaining for Challenge</div>
+        <div class="timer-display" id="timerDisplay">
+          <span class="clock-sticker">⏳</span>
+          --
+        </div>
+      </div>
       <div class="scoreboard">
         
         <div class="shield-container" id="shieldContainer">
@@ -512,14 +531,7 @@
         <div class="score" id="score">0</div>
       </div>
       
-      <div class="timer-container">
-          <div class="timer-caption">⏱️ Time Remaining for Challenge</div>
-          <div class="timer-display" id="timerDisplay">
-             <span class="clock-sticker">⏳</span>
-             --
-          </div>
-      </div>
-      </aside>
+    </aside>
 
     <footer>+10 points per correct answer. Reach 450 to celebrate! 🎉</footer>
   </main>
@@ -536,7 +548,7 @@
     let quizPoints = { mc: 0, fill: 0, match: 0 }; 
     
     const TIMER_DURATIONS = {
-        'mc': 30,    
+        'mc': 30,   
         'fill': 25,  
         'match': 20  
     };
